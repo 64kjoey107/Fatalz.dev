@@ -4,75 +4,51 @@ local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/
 local Window = Library:CreateWindow({
     Title = "???",
     Theme = "Dark",
-    Size = UDim2.fromOffset(400, 250),  -- Made the window smaller
-    Transparency = 0.05,  -- Set the transparency to 0.05
-    Blurring = false,  -- Make sure the blur option is off
+    Size = UDim2.fromOffset(400, 250),
+    Transparency = 0.05,
+    Blurring = false,
     MinimizeKeybind = Enum.KeyCode.LeftAlt,
 })
 
 local Themes = {
     Light = {
-
         Primary = Color3.fromRGB(232, 232, 232),
         Secondary = Color3.fromRGB(255, 255, 255),
         Component = Color3.fromRGB(245, 245, 245),
         Interactables = Color3.fromRGB(235, 235, 235),
-
- 
         Tab = Color3.fromRGB(50, 50, 50),
         Title = Color3.fromRGB(0, 0, 0),
         Description = Color3.fromRGB(100, 100, 100),
-
- 
         Shadow = Color3.fromRGB(255, 255, 255),
         Outline = Color3.fromRGB(210, 210, 210),
-
-     
         Icon = Color3.fromRGB(100, 100, 100),
     },
-
     Dark = {
-        --// Frames:
         Primary = Color3.fromRGB(30, 30, 30),
         Secondary = Color3.fromRGB(35, 35, 35),
         Component = Color3.fromRGB(40, 40, 40),
         Interactables = Color3.fromRGB(45, 45, 45),
-
-     
         Tab = Color3.fromRGB(200, 200, 200),
         Title = Color3.fromRGB(240, 240, 240),
         Description = Color3.fromRGB(200, 200, 200),
-
-       
         Shadow = Color3.fromRGB(0, 0, 0),
         Outline = Color3.fromRGB(40, 40, 40),
-
-     
         Icon = Color3.fromRGB(220, 220, 220),
     },
-
     Void = {
-   
         Primary = Color3.fromRGB(15, 15, 15),
         Secondary = Color3.fromRGB(20, 20, 20),
         Component = Color3.fromRGB(25, 25, 25),
         Interactables = Color3.fromRGB(30, 30, 30),
-
-  
         Tab = Color3.fromRGB(200, 200, 200),
         Title = Color3.fromRGB(240, 240, 240),
         Description = Color3.fromRGB(200, 200, 200),
-
-   
         Shadow = Color3.fromRGB(0, 0, 0),
         Outline = Color3.fromRGB(40, 40, 40),
-
-      
         Icon = Color3.fromRGB(220, 220, 220),
     },
 }
 
---// Set the default theme to Extra Dark (Void)
 Window:SetTheme(Themes.Void)
 
 Window:AddTabSection({
@@ -99,14 +75,14 @@ Window:AddParagraph({
     Tab = Main
 })
 
-Window:AddSection({ Name = "Interactable", Tab = Main })
+Window:AddSection({ Name = "Feature’s ", Tab = Main })
 
+-- Existing Button for Purple Hollow
 local PurpleHollowButton = Window:AddButton({
-    Title = "Purple Hollow",  -- Change the button title here
+    Title = "Purple Hollow",
     Description = "Run the Purple Hollow script",
     Tab = Main,
     Callback = function()
-      
         local args = { [1] = 16, [2] = 50 }
         game:GetService("ReplicatedStorage").Purple:FireServer(unpack(args))
         Window:Notify({
@@ -117,8 +93,9 @@ local PurpleHollowButton = Window:AddButton({
     end,
 })
 
+-- Existing Button for Drop Cash
 local DropCashButton = Window:AddButton({
-    Title = "Drop Cash x100",  -- Title for the button
+    Title = "Drop Cash x100",
     Description = "Drops $1 100 times",
     Tab = Main,
     Callback = function()
@@ -134,6 +111,86 @@ local DropCashButton = Window:AddButton({
     end,
 })
 
+-- New Button for Scanning Weapons
+local ScanWeaponsButton = Window:AddButton({
+    Title = "Scan for Item’s",
+    Description = "Scan for items in the game",
+    Tab = Main,
+    Callback = function()
+        -- Your weapon detection and collection script
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        local backpack = player:FindFirstChild("Backpack")
+
+        if not humanoidRootPart or not backpack then
+            warn("Error: Could not find the HumanoidRootPart or Backpack.")
+            return
+        end
+
+        local originalPosition = humanoidRootPart.CFrame
+        local itemsCollected = 0
+
+        local function collectItems()
+            for _, object in pairs(game.Workspace:GetDescendants()) do
+                if object.Name == "SwordGiver" or object.Name == "GearGiver" or object.Name == "Giver" then
+                    if object.Parent:FindFirstChildOfClass("Part") then
+                        humanoidRootPart.CFrame = object.Parent:FindFirstChildOfClass("Part").CFrame + Vector3.new(0, 1, 0)
+                        wait(0.1)
+                        -- Check if it's a tool and add it to the backpack
+                        if object:IsA("Tool") then
+                            object.Parent = backpack
+                            itemsCollected = itemsCollected + 1
+                        end
+                    end
+                end
+            end
+        end
+
+        -- Collect the items
+        collectItems()
+
+        -- Return to the original position
+        humanoidRootPart.CFrame = originalPosition
+        print("Process complete. Items collected: " .. itemsCollected)
+
+        Window:Notify({
+            Title = "Scan Complete",
+            Description = "Weapon scan complete. Items collected: " .. itemsCollected,
+            Duration = 4
+        })
+    end,
+})
+
+-- New Button for Equip All
+local EquipAllButton = Window:AddButton({
+    Title = "Equip All",
+    Description = "Equip all available items in the inventory",
+    Tab = Main,
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local backpack = player:FindFirstChild("Backpack")
+        if not backpack then
+            warn("Error: Backpack not found.")
+            return
+        end
+
+        -- Equip all items in the backpack
+        for _, item in pairs(backpack:GetChildren()) do
+            if item:IsA("Tool") then
+                item.Parent = player.Character
+            end
+        end
+
+        Window:Notify({
+            Title = "Equip All",
+            Description = "All available items have been equipped.",
+            Duration = 4
+        })
+    end,
+})
+
+-- Settings Section
 local Settings = Window:AddTab({
     Title = "Settings",
     Section = "Settings",
@@ -166,7 +223,7 @@ Window:AddDropdown({
 Window:AddToggle({
     Title = "UI Blur",
     Description = "If enabled, must have your Roblox graphics set to 8+ for it to work",
-    Default = false,  -- Make sure blur is off by default
+    Default = false,
     Tab = Settings,
     Callback = function(Boolean)
         Window:SetSetting("Blur", Boolean)
@@ -187,7 +244,7 @@ Window:AddSlider({
 Window:Notify({
     Title = "Welcome to Build island",
     Description = "Press Left Alt to Minimize and Open the tab!",
-    Duration = 5
+    Duration = 4
 })
 
 UserInputService.InputBegan:Connect(function(Key)
