@@ -1,5 +1,4 @@
 local UserInputService = game:GetService("UserInputService")
-
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/lxte/lates-lib/main/Main.lua"))()
 local Window = Library:CreateWindow({
     Title = "???",
@@ -111,14 +110,92 @@ local DropCashButton = Window:AddButton({
     end,
 })
 
--- New Button for Teleport to Main Menu
-local TeleportToMainMenuButton = Window:AddButton({
+-- New Button for Scanning Items
+local ScanWeaponsButton = Window:AddButton({
+    Title = "Scan for Item’s",
+    Description = "Scan for items in the game",
+    Tab = Main,
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        local backpack = player:FindFirstChild("Backpack")
+
+        if not humanoidRootPart or not backpack then
+            warn("Error: Could not find the HumanoidRootPart or Backpack.")
+            return
+        end
+
+        local originalPosition = humanoidRootPart.CFrame
+        local itemsCollected = 0
+
+        local function collectItems()
+            for _, object in pairs(game.Workspace:GetDescendants()) do
+                if object.Name == "SwordGiver" or object.Name == "GearGiver" or object.Name == "Giver" then
+                    if object.Parent:FindFirstChildOfClass("Part") then
+                        humanoidRootPart.CFrame = object.Parent:FindFirstChildOfClass("Part").CFrame + Vector3.new(0, 1, 0)
+                        wait(0.1)
+                        -- Check if it's a tool and add it to the backpack
+                        if object:IsA("Tool") then
+                            object.Parent = backpack
+                            itemsCollected = itemsCollected + 1
+                        end
+                    end
+                end
+            end
+        end
+
+        -- Collect the items
+        collectItems()
+
+        -- Return to the original position
+        humanoidRootPart.CFrame = originalPosition
+        print("Process complete. Items collected: " .. itemsCollected)
+
+        Window:Notify({
+            Title = "Scan Complete",
+            Description = "Weapon scan complete. Items collected: " .. itemsCollected,
+            Duration = 4
+        })
+    end,
+})
+
+-- New Button for Equip All
+local EquipAllButton = Window:AddButton({
+    Title = "Equip All",
+    Description = "Equip all available items in the inventory",
+    Tab = Main,
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local backpack = player:FindFirstChild("Backpack")
+        if not backpack then
+            warn("Error: Backpack not found.")
+            return
+        end
+
+        -- Equip all items in the backpack
+        for _, item in pairs(backpack:GetChildren()) do
+            if item:IsA("Tool") then
+                item.Parent = player.Character
+            end
+        end
+
+        Window:Notify({
+            Title = "Equip All",
+            Description = "All available items have been equipped.",
+            Duration = 4
+        })
+    end,
+})
+
+-- Button for Teleport to Main Menu
+local TeleportButton = Window:AddButton({
     Title = "Teleport to Main Menu",
     Description = "Teleport to the main menu",
     Tab = Main,
     Callback = function()
         local function tpToMainMenu()
-            local cam = workspace.CurrentCamera
+            local cam = Workspace.CurrentCamera
             local blurEffect = cam:FindFirstChildOfClass("BlurEffect")
             if blurEffect then
                 blurEffect:Destroy()
@@ -131,7 +208,7 @@ local TeleportToMainMenuButton = Window:AddButton({
             part.Anchored = true
             part.Transparency = 0.9
             part.CFrame = cam.CFrame * CFrame.new(0, -3, -3) -- Position relative to camera
-            part.Parent = workspace
+            part.Parent = Workspace
 
             -- Teleport the character above the platform
             local character = game.Players.LocalPlayer.Character
@@ -143,12 +220,6 @@ local TeleportToMainMenuButton = Window:AddButton({
 
         -- Execute the teleportation function
         tpToMainMenu()
-
-        Window:Notify({
-            Title = "Teleporting",
-            Description = "You are being teleported to the main menu.",
-            Duration = 4
-        })
     end,
 })
 
@@ -181,36 +252,3 @@ Window:AddDropdown({
         Window:SetTheme(Themes[Theme])
     end,
 })
-
-Window:AddToggle({
-    Title = "UI Blur",
-    Description = "If enabled, must have your Roblox graphics set to 8+ for it to work",
-    Default = false,
-    Tab = Settings,
-    Callback = function(Boolean)
-        Window:SetSetting("Blur", Boolean)
-    end,
-})
-
-Window:AddSlider({
-    Title = "UI Transparency",
-    Description = "Set the transparency of the UI",
-    Tab = Settings,
-    AllowDecimals = true,
-    MaxValue = 1,
-    Callback = function(Amount)
-        Window:SetSetting("Transparency", Amount)
-    end,
-})
-
-Window:Notify({
-    Title = "Welcome to Build island",
-    Description = "Press Left Alt to Minimize and Open the tab!",
-    Duration = 4
-})
-
-UserInputService.InputBegan:Connect(function(Key)
-    if Key == Keybind then
-        warn("You have pressed the minimize keybind!");
-    end
-end)
